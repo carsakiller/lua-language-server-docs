@@ -1,23 +1,39 @@
+import { execSync } from "child_process";
 import fs from "fs";
 import axios from "axios";
 import hljs from "highlight.js";
 import MarkdownIt from "markdown-it";
 import jsdom from "jsdom";
 import chalk from "chalk";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 
-const MARKDOWN_DIR = "./src/markdown/";
+dayjs.extend(utc);
+
+/********************************* CONSTANTS *********************************/
+
+// paths
+const MARKDOWN_DIR = "./wiki_pages/";
 const TEMPLATE = "./src/template.html";
 const HTML_DIR = "./out/";
 const IMAGE_DIR = "images/";
+const WIKI_REPO_GIT_DIR = MARKDOWN_DIR + ".git";
 
+// REGEXs
 const WIKI_LINK_REGEX =
-  /https:\/\/github\.com\/sumneko\/lua-language-server\/wiki\/([A-Za-z-]+)(#[a-z-]+)?/g;
+  /https:\/\/github\.com\/sumneko\/lua-language-server\/wiki\/([A-Za-z-%0-9]+)(#[a-z-%0-9]+)?/g;
 const IMAGE_REGEX = /!\[[^\]]*\]\(([a-zA-Z:/\-.0-9?=+&%~]+)\)/g;
 
-/**
- * Log fatal error and exit
- */
-function handleError(err: NodeJS.ErrnoException | Error | null | unknown) {
+// repo URLs
+const WIKI_LINK = "https://github.com/sumneko/lua-language-server/wiki";
+const WIKI_REPO_URL = "https://github.com/sumneko/lua-language-server.wiki.git";
+
+// misc
+const TIMESTAMP = dayjs.utc().format("DD MMM YYYY @ h:mm:a UTC");
+
+/********************************** HELPERS **********************************/
+
+function fatalError(err: NodeJS.ErrnoException | Error | null | unknown) {
   if (!err) return;
 
   if (err instanceof Error) {
@@ -45,7 +61,9 @@ async function downloadImage(url: string, path: string) {
         const w = response.data.pipe(writer);
         w.on("finish", () => {
           console.log(
-            `${chalk.bgCyanBright(" IMG↓ ")} downloaded ${url} and saved to ${path}`
+            `${chalk.bgCyanBright(" IMG↓ ")} downloaded ${chalk.blueBright(
+              url
+            )} and saved to ${chalk.magenta(path)}`
           );
           resolve(true);
         });
@@ -58,61 +76,20 @@ async function downloadImage(url: string, path: string) {
           reject(false);
         });
       })
-      .catch((e) => handleError(e));
+      .catch((e) => fatalError(e));
   });
 }
 
-/////// Prepare Parsers ///////
-
-// Create MarkdownIt parser
-const md = new MarkdownIt({
-  html: true,
-  xhtmlOut: true,
-  highlight: (code, lang) => {
-    if (!lang) return code;
-    console.log(
-      `${chalk.bgYellow(" HLJS ")} highlighting ${chalk.magenta(lang)}`
-    );
-    return hljs.highlight(code, { language: lang }).value;
-  },
-});
-
-// Create jsDOM parser
-const { JSDOM } = jsdom;
-
-const template = fs.readFileSync(TEMPLATE);
-const templateDOM = new JSDOM(template);
-
-///////////////////////////////
-
-// Create dir for HTML and images
-fs.mkdirSync(HTML_DIR + IMAGE_DIR, { recursive: true });
-
-let markdownFiles: string[] = [];
-
-try {
-  markdownFiles = fs.readdirSync(MARKDOWN_DIR);
-} catch (e) {
-  handleError(e);
-}
-
-for (const file of markdownFiles) {
-  let content = "";
-
-  try {
-    content = fs.readFileSync(MARKDOWN_DIR + file, "utf-8");
-  } catch (e) {
-    handleError(e);
-  }
-
-  console.log(`${chalk.white.bgCyan(" READ ")} ${chalk.magentaBright(file)}`);
-
+/**
+ * Converts links to other wiki pages to links pointing to local files. Also downloads images and points those to the local copies.
+ */
+function localizeMarkdown(txt: string) {
   // replace wiki links with links to local files
-  content = content.replace(WIKI_LINK_REGEX, "./$1.html$2");
+  txt = txt.replace(WIKI_LINK_REGEX, "./$1.html$2");
 
   // download images and point links to local files
   const replacements = [];
-  for (const match of content.matchAll(IMAGE_REGEX)) {
+  for (const match of txt.matchAll(IMAGE_REGEX)) {
     const URL = match[1];
     const splitURL = match[1].split("/");
     const filename = splitURL[splitURL.length - 1].replace(/\?.*/g, "");
@@ -125,9 +102,103 @@ for (const file of markdownFiles) {
     });
   }
   for (const r of replacements) {
-    content = content.replace(r.target, r.replacement);
+    txt = txt.replace(r.target, r.replacement);
   }
 
+  return txt;
+}
+
+/****************************** PREPARE PARSERS ******************************/
+
+// Create MarkdownIt parser
+const md = new MarkdownIt({
+  html: true,
+  xhtmlOut: true,
+  highlight: (code, lang) => {
+    if (!lang) return code;
+    try {
+      const hl = hljs.highlight(code, { language: lang });
+      return hl.value;
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.warn(`${chalk.bgYellowBright(" WARN ")} ${e.message}`);
+      } else {
+        console.warn(`${chalk.bgYellowBright(" WARN ")} ${e}`);
+      }
+      return code;
+    }
+  },
+});
+
+// Create jsDOM parser
+const { JSDOM } = jsdom;
+
+// Get template file to insert markdown into
+const template = fs.readFileSync(TEMPLATE);
+const templateDOM = new JSDOM(template);
+
+/***************************** GET GIT REPOSITORY *****************************/
+let commitHash;
+
+try {
+  if (!fs.existsSync(MARKDOWN_DIR)) {
+    fs.mkdirSync(MARKDOWN_DIR);
+  }
+
+  if (fs.existsSync(WIKI_REPO_GIT_DIR)) {
+    // repo already exists locally
+    console.log(
+      `${chalk.bgMagenta(" PULL ")} pulling ${chalk.blueBright(WIKI_REPO_URL)}`
+    );
+    execSync(`git --git-dir ${WIKI_REPO_GIT_DIR} fetch`);
+    execSync(`git --git-dir ${WIKI_REPO_GIT_DIR} pull`);
+  } else {
+    // repo needs to be cloned
+    console.log(
+      `${chalk.bgMagenta(" CLNE ")} cloning into ${chalk.blueBright(
+        WIKI_REPO_URL
+      )}`
+    );
+    execSync(`git clone ${WIKI_REPO_GIT_DIR} ${MARKDOWN_DIR}`);
+  }
+
+  // Get current commit hash
+  commitHash = execSync(`git --git-dir ${WIKI_REPO_GIT_DIR} log --oneline`)
+    .toString()
+    .substring(0, 7);
+} catch (e) {
+  fatalError(e);
+}
+
+/************************** CONVERT MARKDOWN → HTML **************************/
+
+// Create dir for HTML and images
+fs.mkdirSync(HTML_DIR + IMAGE_DIR, { recursive: true });
+
+let markdownFiles: string[] = [];
+
+try {
+  markdownFiles = fs.readdirSync(MARKDOWN_DIR);
+  markdownFiles = markdownFiles.filter((filename) =>
+    filename.includes(".md", filename.length - 4)
+  );
+} catch (e) {
+  fatalError(e);
+}
+
+for (const file of markdownFiles) {
+  let content = "";
+
+  try {
+    content = fs.readFileSync(MARKDOWN_DIR + file, "utf-8");
+  } catch (e) {
+    fatalError(e);
+  }
+
+  console.log(`${chalk.white.bgCyan(" READ ")} ${chalk.magentaBright(file)}`);
+
+  // Localize images and links between pages
+  content = localizeMarkdown(content);
   // Get HTML from Markdown
   const htmlString = md.render(content);
   // Convert into DOM Object
@@ -136,10 +207,11 @@ for (const file of markdownFiles) {
   // Insert HTML into template
   const main = templateDOM.window.document.querySelector("body > main");
   if (!main) throw new Error("Template does not contain a <main> element!");
-  main.innerHTML = dom.serialize();
+
+  main.innerHTML = `<p><i>Last Updated From <a href="${WIKI_LINK}" target="_blank">GitHub Wiki</a>: ${TIMESTAMP}</i> | <code>${commitHash}</code></p>${dom.serialize()}`;
 
   const filename = file.replace(".md", ".html");
-
+  
   try {
     fs.writeFileSync(
       HTML_DIR + filename,
@@ -149,6 +221,6 @@ for (const file of markdownFiles) {
       `${chalk.bgGreenBright(" DONE ")} ${chalk.magentaBright(filename)}`
     );
   } catch (e) {
-    handleError(e);
+    fatalError(e);
   }
 }

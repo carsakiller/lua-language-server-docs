@@ -1,3 +1,4 @@
 node_modules
 out
-src/markdown
+wiki_pages
+src/*.js

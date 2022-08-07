@@ -43,7 +43,7 @@ function fatalError(err: NodeJS.ErrnoException | Error | null | unknown) {
       )}\n${chalk.red(err.stack)}`
     );
   } else {
-    console.error(err.toString());
+    console.error(err);
   }
   process.exit(1);
 }

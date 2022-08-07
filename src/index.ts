@@ -211,7 +211,7 @@ for (const file of markdownFiles) {
   main.innerHTML = `<p><i>Last Updated From <a href="${WIKI_LINK}" target="_blank">GitHub Wiki</a>: ${TIMESTAMP}</i> | <code>${commitHash}</code></p>${dom.serialize()}`;
 
   const filename = file.replace(".md", ".html");
-  
+
   try {
     fs.writeFileSync(
       HTML_DIR + filename,

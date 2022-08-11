@@ -140,7 +140,6 @@ body
     flex: 7 1
     min-width: 100px
 
-
 main
     padding: 0rem 2.5rem 3rem 2.5rem
 
@@ -169,7 +168,7 @@ main
     h1,h2,h3,h4,h5,h6
         background: linear-gradient(to left, transparent 50%, #ffff0055 50%) right
         background-size: 200%
-        transition: background 0.5s ease-in-out
+        transition: background 1s cubic-bezier(1,.02,.42,.99)
 
         &:target
             background-position: left
@@ -208,8 +207,19 @@ aside
             margin-top: 0px
             background-color: var(--sidebar-background-color)
 
-    &:not(:first-of-type)
+    #table-of-contents
         right: 0px
+
+    #pages
+        nav a
+            margin-left: 1.5rem
+
+            &.active
+                margin-left: 0px
+
+                &:before
+                    content: "📍"
+                    display: inline-block
 
     nav a
         @include truncate
@@ -243,10 +253,6 @@ aside
             margin: 0.11rem 0px 0.11rem 5rem
             font-size: 0.83em
 
-        &.active:before
-            content: "▸"
-            color: var(--link-color-hover)
-
 footer
     background-color: var(--footer-background-color)
     display: block
@@ -263,10 +269,10 @@ pre > code
     .hljs-comment
         color: var(--code-comment)
 
-    .hljs-keyword,.hljs-punctuation
+    .hljs-keyword
         color: var(--code-keyword)
 
-    .hljs-string,.hljs-attr
+    .hljs-string
         color: var(--code-string)
 
     .hljs-number
@@ -282,7 +288,17 @@ pre > code
         color: var(--code-literal)
 
     .hljs-params
-        color: var(--text-color)
+        color: var(--code-params)
+
+    .hljs-punctuation
+        color: var(--code-punctuation)
+
+    .hljs-attr
+        color: var(--code-attr)
+
+
+// MEDIA QUERIES
+
 
 @media (prefers-reduced-motion: reduce)
     html,
@@ -294,7 +310,7 @@ pre > code
         display: grid
         grid-template-columns: 3fr 1fr
 
-        aside:first-of-type
+        aside #pages
             grid-column: 1/3
             text-align: center
 

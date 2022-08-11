@@ -199,8 +199,8 @@ try {
 }
 
 // generate pages side navbar
-const nav = templateDOM.window.document.querySelector("#pages > nav");
-if (!nav) throw new Error("Template does not contain #pages inside <header>");
+const nav = templateDOM.window.document.querySelector("#pages nav");
+if (!nav) throw new Error("Template does not contain #pages");
 
 for (const file of markdownFiles) {
   const filename = file.substring(0, file.length - 3);
@@ -228,11 +228,11 @@ for (const file of markdownFiles) {
 
   // generate table of contents
   const sidenav = templateDOM.window.document.querySelector(
-    "#table-of-contents > nav"
+    "#table-of-contents nav"
   );
   if (!sidenav)
     throw new Error(
-      "Template does not contain a #table-of-contents inside an <aside>"
+      "Template does not contain a #table-of-contents"
     );
   sidenav.innerHTML = "";
 

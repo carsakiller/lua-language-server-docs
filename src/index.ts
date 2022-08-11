@@ -94,7 +94,9 @@ function localizeMarkdown(txt: string) {
     const splitURL = match[1].split("/");
     const filename = splitURL[splitURL.length - 1].replace(/\?.*/g, "");
 
-    downloadImage(URL, HTML_DIR + IMAGE_DIR + filename);
+    if (!fs.existsSync(HTML_DIR + IMAGE_DIR + filename)) {
+      downloadImage(URL, HTML_DIR + IMAGE_DIR + filename);
+    }
 
     replacements.push({
       target: match[0],
@@ -150,8 +152,8 @@ try {
     console.log(
       `${chalk.bgMagenta(" PULL ")} pulling ${chalk.blueBright(WIKI_REPO_URL)}`
     );
-    execSync(`git --git-dir ${WIKI_REPO_GIT_DIR} fetch`);
-    execSync(`git --git-dir ${WIKI_REPO_GIT_DIR} pull`);
+    execSync(`git --git-dir ${WIKI_REPO_GIT_DIR} --work-tree ${MARKDOWN_DIR} fetch`);
+    execSync(`git --git-dir ${WIKI_REPO_GIT_DIR} --work-tree ${MARKDOWN_DIR} pull`);
   } else {
     // repo needs to be cloned
     console.log(
@@ -159,7 +161,7 @@ try {
         WIKI_REPO_URL
       )}`
     );
-    execSync(`git clone ${WIKI_REPO_GIT_DIR} ${MARKDOWN_DIR}`);
+    execSync(`git clone ${WIKI_REPO_URL} ${MARKDOWN_DIR}`);
   }
 
   // Get current commit hash
@@ -172,6 +174,8 @@ try {
 
 /************************** CONVERT MARKDOWN → HTML **************************/
 
+fs.copyFileSync("./src/styles.css", HTML_DIR + "styles.css");
+
 // Create dir for HTML and images
 fs.mkdirSync(HTML_DIR + IMAGE_DIR, { recursive: true });
 
@@ -179,15 +183,31 @@ let markdownFiles: string[] = [];
 
 try {
   markdownFiles = fs.readdirSync(MARKDOWN_DIR);
-  markdownFiles = markdownFiles.filter((filename) =>
-    filename.includes(".md", filename.length - 4)
-  );
+  markdownFiles = markdownFiles
+    .filter((filename) => filename.includes(".md", filename.length - 4))
+    .filter((filename) => !filename.includes("_"));
+  markdownFiles.sort((a, b) => {
+    if (a === "Home.md" || b === "Home.md") {
+      return a === "Home" ? 1 : -1;
+    }
+    return a.localeCompare(b);
+  });
 } catch (e) {
   fatalError(e);
 }
 
+// generate pages side navbar
+const nav = templateDOM.window.document.querySelector("#pages > nav");
+if (!nav) throw new Error("Template does not contain #pages inside <header>");
+
+for (const file of markdownFiles) {
+  const filename = file.substring(0, file.length - 3);
+  nav.innerHTML += `\n<a href="./${filename}.html" title="${filename}">${filename}</a>`;
+}
+
 for (const file of markdownFiles) {
   let content = "";
+  const filename = file.substring(0, file.length - 3);
 
   try {
     content = fs.readFileSync(MARKDOWN_DIR + file, "utf-8");
@@ -204,21 +224,61 @@ for (const file of markdownFiles) {
   // Convert into DOM Object
   const dom = new JSDOM(htmlString);
 
+  // generate table of contents
+  const sidenav = templateDOM.window.document.querySelector(
+    "#table-of-contents > nav"
+  );
+  if (!sidenav)
+    throw new Error(
+      "Template does not contain a #table-of-contents inside an <aside>"
+    );
+  sidenav.innerHTML = "";
+
+  const headings = dom.window.document.querySelectorAll("h1,h2,h3,h4,h5,h6");
+  for (const heading of headings) {
+    const headingText = heading.textContent ?? "LOST";
+    const escapedHeading = encodeURIComponent(
+      headingText.replace(/[^-\w\d\p{L}\p{M}*]+/gu, "")
+    )
+      .replace(/\s/g, "-")
+      .toLowerCase();
+
+    heading.id = escapedHeading;
+    const tag = heading.tagName.toLowerCase();
+
+    heading.replaceWith(
+      new JSDOM(
+        `<div class="heading" id="${escapedHeading}"><a href=#${escapedHeading}>#</a><${tag}>${headingText}</${tag}></div>`
+      ).window.document.body
+    );
+
+    sidenav.innerHTML += `<a href="#${escapedHeading}" class="${tag}" title="${headingText}">${heading.textContent}</a>`;
+  }
+
+  const generate_stamp =
+    templateDOM.window.document.querySelector("body footer > div");
+  if (!generate_stamp)
+    throw new Error("Template does not contain a <footer> element!");
+  generate_stamp.innerHTML = `<div><i>Generated from commit <code>${commitHash}</code> of <a href="${WIKI_LINK}/${file.substring(
+    0,
+    file.length - 3
+  )}" target="_blank">GitHub Wiki</a> at ${TIMESTAMP}</i></div>`;
+
   // Insert HTML into template
-  const main = templateDOM.window.document.querySelector("body > main");
+  const main = templateDOM.window.document.querySelector("body main");
   if (!main) throw new Error("Template does not contain a <main> element!");
+  main.innerHTML = dom.serialize();
 
-  main.innerHTML = `<p><i>Last Updated From <a href="${WIKI_LINK}" target="_blank">GitHub Wiki</a>: ${TIMESTAMP}</i> | <code>${commitHash}</code></p>${dom.serialize()}`;
-
-  const filename = file.replace(".md", ".html");
+  const title = templateDOM.window.document.querySelector("head > title");
+  if (!title) throw new Error("Template does not contain a <title> element!");
+  title.textContent = "Sumneko-Lua / " + filename;
 
   try {
-    fs.writeFileSync(
-      HTML_DIR + filename,
-      templateDOM.window.document.documentElement.outerHTML
-    );
+    fs.writeFileSync(HTML_DIR + filename + ".html", templateDOM.serialize());
     console.log(
-      `${chalk.bgGreenBright(" DONE ")} ${chalk.magentaBright(filename)}`
+      `${chalk.bgGreenBright(" DONE ")} ${chalk.magentaBright(
+        filename + ".html"
+      )}`
     );
   } catch (e) {
     fatalError(e);

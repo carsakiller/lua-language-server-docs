@@ -178,8 +178,6 @@ try {
 
 /************************** CONVERT MARKDOWN → HTML **************************/
 
-fs.copyFileSync("./src/styles.css", HTML_DIR + "styles.css");
-
 // Create dir for HTML and images
 fs.mkdirSync(HTML_DIR + IMAGE_DIR, { recursive: true });
 
@@ -252,7 +250,7 @@ for (const file of markdownFiles) {
 
     heading.replaceWith(
       new JSDOM(
-        `<div class="heading" id="${escapedHeading}"><a href=#${escapedHeading}>#</a><${tag}>${headingText}</${tag}></div>`
+        `<div class="heading"><a href=#${escapedHeading}>#</a>${heading.outerHTML}</div>`
       ).window.document.body
     );
 

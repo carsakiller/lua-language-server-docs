@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "glenn2223.live-sass",
+        "syler.sass-indented",
+        "dbaeumer.vscode-eslint",
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode"
+    ]
+}

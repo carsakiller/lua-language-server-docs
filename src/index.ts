@@ -257,9 +257,9 @@ for (const file of markdownFiles) {
   }
 
   const generate_stamp =
-    templateDOM.window.document.querySelector("body footer > div");
+    templateDOM.window.document.querySelector("footer");
   if (!generate_stamp)
-    throw new Error("Template does not contain a <footer> element!");
+    throw new Error("Template does not contain a <footer>!");
   generate_stamp.innerHTML = `<div><i>Generated from commit <code>${commitHash}</code> of <a href="${WIKI_LINK}/${file.substring(
     0,
     file.length - 3

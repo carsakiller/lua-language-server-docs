@@ -135,11 +135,14 @@ body
     min-height: calc(100vh - 2.5rem)
     display: flex
 
-main
+#content
     max-width: 100%
-    padding: 0rem 2.5rem 3rem 2.5rem
-    flex: 5 1
+    flex: 7 1
     min-width: 100px
+
+
+main
+    padding: 0rem 2.5rem 3rem 2.5rem
 
     h1
         font-size: 2.8rem
@@ -173,21 +176,21 @@ main
 
     .heading
         display: grid
-        grid-template-columns: 2rem auto
+        grid-template-columns: 1.5rem auto
         align-items: center
         margin-left: -2rem
 
-        a
+        > a
             font-size: 2.3rem
             visibility: hidden
 
-        &:hover a
+        &:hover > a
             visibility: visible
 
 aside
     background-color: var(--sidebar-background-color)
     padding: 4px 10px
-    flex: 1 1
+    flex: 1.75 1
     min-width: 12rem
 
     > div
@@ -206,7 +209,6 @@ aside
             background-color: var(--sidebar-background-color)
 
     &:not(:first-of-type)
-        flex: 2 1
         right: 0px
 
     nav a
@@ -247,22 +249,24 @@ aside
 
 footer
     background-color: var(--footer-background-color)
+    display: block
     padding: 0.5rem 1rem
     text-align: center
     font-size: 0.9rem
-    width: 100%
 
 /* SYNTAX HIGHLIGHTING */
 
-pre code
+pre > code
+
+    color: white
 
     .hljs-comment
         color: var(--code-comment)
 
-    .hljs-keyword
+    .hljs-keyword,.hljs-punctuation
         color: var(--code-keyword)
 
-    .hljs-string
+    .hljs-string,.hljs-attr
         color: var(--code-string)
 
     .hljs-number
@@ -277,7 +281,23 @@ pre code
     .hljs-built_in
         color: var(--code-literal)
 
+    .hljs-params
+        color: var(--text-color)
+
 @media (prefers-reduced-motion: reduce)
     html,
     body
         scroll-behavior: auto
+
+@media (max-width: 800px)
+    body
+        display: grid
+        grid-template-columns: 3fr 1fr
+
+        aside:first-of-type
+            grid-column: 1/3
+            text-align: center
+
+            nav
+                display: grid
+                grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr))

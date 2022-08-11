@@ -16,60 +16,6 @@ h1,h2,h3,h4,h5,h6
 img
     max-width: 100%
 
-aside
-    background-color: var(--sidebar-background-color)
-    padding: 4px 10px
-
-    > div
-        position: sticky
-        top: 0.5rem
-        max-height: calc(100vh - 3rem)
-        overflow-y: auto
-
-        > h1
-            text-align: center
-            border-bottom: solid 2px
-            border-bottom-color: var(--h2-underline-color)
-            position: sticky
-            top: 0px
-            margin-top: 0px
-            background-color: var(--sidebar-background-color)
-
-    &:not(:first-of-type)
-        right: 0px
-
-aside nav a
-    @include truncate
-    display: block
-    color: var(--text-color)
-    font-size: 1.1rem
-
-    &:hover
-        color: var(--link-color-hover)
-
-    &.h1
-        font-size: 1.1em
-
-    &.h2
-        margin: 0.25rem 0px 0.25rem 1rem
-        font-size: 0.9em
-
-    &.h3
-        margin: 0.22rem 0px 0.22rem 2rem
-        font-size: 0.95em
-
-    &.h4
-        margin: 0.18rem 0px 0.18rem 3rem
-        font-size: 0.91em
-
-    &.h5
-        margin: 0.15rem 0px 0.15rem 4rem
-        font-size: 0.87em
-
-    &.h6
-        margin: 0.11rem 0px 0.11rem 5rem
-        font-size: 0.83em
-
 p
     margin: 0.5rem auto
 
@@ -167,12 +113,10 @@ table
 
 // STRUCTURE ELEMENTS
 
-html,
-body
+html,body
     margin: 0
     padding: 0
     width: 100%
-    height: 100%
     background-color: var(--background-color)
     color: var(--text-color)
     scroll-behavior: smooth
@@ -186,15 +130,15 @@ body
     font-size: 16px
     line-height: 1.5
     word-wrap: break-word
-    display: grid
     width: 100%
-    grid-template-columns: max(11vw, 11rem) 1fr max(20vw, 17rem)
     min-height: calc(100vh - 2.5rem)
+    display: flex
 
 main
     max-width: 100%
-    min-width: 200px
     padding: 0rem 2.5rem 3rem 2.5rem
+    flex: 5 1
+    min-width: 100px
 
     h1
         font-size: 2.8rem
@@ -221,7 +165,7 @@ main
     h1,h2,h3,h4,h5,h6
         background: linear-gradient(to left, transparent 50%, #ffff0033 50%) right
         background-size: 200%
-        transition: all 0.5s ease-in-out
+        transition: background 0.5s ease-in-out
 
         &:target
             background-position: left
@@ -238,6 +182,66 @@ main
 
         &:hover a
             visibility: visible
+
+aside
+    background-color: var(--sidebar-background-color)
+    padding: 4px 10px
+    flex: 1 1
+    min-width: 12rem
+
+    > div
+        position: sticky
+        top: 0.5rem
+        max-height: calc(100vh - 3rem)
+        overflow-y: auto
+
+        > h1
+            text-align: center
+            border-bottom: solid 2px
+            border-bottom-color: var(--h2-underline-color)
+            position: sticky
+            top: 0px
+            margin-top: 0px
+            background-color: var(--sidebar-background-color)
+
+    &:not(:first-of-type)
+        flex: 2 1
+        right: 0px
+
+    nav a
+        @include truncate
+        display: block
+        color: var(--text-color)
+        font-size: 1.1rem
+
+        &:hover
+            color: var(--link-color-hover)
+
+        &.h1
+            font-size: 1.1em
+
+        &.h2
+            margin: 0.25rem 0px 0.25rem 1rem
+            font-size: 0.9em
+
+        &.h3
+            margin: 0.22rem 0px 0.22rem 2rem
+            font-size: 0.95em
+
+        &.h4
+            margin: 0.18rem 0px 0.18rem 3rem
+            font-size: 0.91em
+
+        &.h5
+            margin: 0.15rem 0px 0.15rem 4rem
+            font-size: 0.87em
+
+        &.h6
+            margin: 0.11rem 0px 0.11rem 5rem
+            font-size: 0.83em
+
+        &.active:before
+            content: "👉"
 
 footer
     background-color: var(--footer-background-color)

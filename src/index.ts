@@ -152,8 +152,12 @@ try {
     console.log(
       `${chalk.bgMagenta(" PULL ")} pulling ${chalk.blueBright(WIKI_REPO_URL)}`
     );
-    execSync(`git --git-dir ${WIKI_REPO_GIT_DIR} --work-tree ${MARKDOWN_DIR} fetch`);
-    execSync(`git --git-dir ${WIKI_REPO_GIT_DIR} --work-tree ${MARKDOWN_DIR} pull`);
+    execSync(
+      `git --git-dir ${WIKI_REPO_GIT_DIR} --work-tree ${MARKDOWN_DIR} fetch`
+    );
+    execSync(
+      `git --git-dir ${WIKI_REPO_GIT_DIR} --work-tree ${MARKDOWN_DIR} pull`
+    );
   } else {
     // repo needs to be cloned
     console.log(

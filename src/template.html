@@ -5,19 +5,22 @@
     <link rel="stylesheet" href="styles.css" />
     <title></title>
     <script>
-      window.addEventListener("load", () => {
+      window.addEventListener("DOMContentLoaded", () => {
         const currentPath = window.location.pathname;
         const lastSlashIndex = currentPath.lastIndexOf("/");
-        const filename = currentPath.substring(lastSlashIndex + 1, currentPath.length - 5);
+        const filename = currentPath.substring(
+          lastSlashIndex + 1,
+          currentPath.length - 5
+        );
 
         const pages = document.querySelectorAll("#pages > nav > a");
         pages.forEach((element) => {
           if (element.innerText === filename) {
             element.classList.add("active");
-            return
+            return;
           }
         });
-      })
+      });
     </script>
   </head>
   <body>

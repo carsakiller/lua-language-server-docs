@@ -240,9 +240,8 @@ for (const file of markdownFiles) {
   for (const heading of headings) {
     const headingText = heading.textContent ?? "LOST";
     const escapedHeading = encodeURIComponent(
-      headingText.replace(/[^-\w\d\p{L}\p{M}*]+/gu, "")
+      headingText.replace(/[^-\s\w\d\p{L}\p{M}*]+/gu, "").replace(/\s/g, "-")
     )
-      .replace(/\s/g, "-")
       .toLowerCase();
 
     heading.id = escapedHeading;

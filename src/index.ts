@@ -258,7 +258,7 @@ for (const file of markdownFiles) {
 
     heading.replaceWith(
       new JSDOM(
-        `<div class="heading"><a href=#${escapedHeading} title="#${escapedHeading}">#</a>${heading.outerHTML}</div>`
+        `<div class="heading"><a href=#${escapedHeading} title="#${escapedHeading}">🔗</a>${heading.outerHTML}</div>`
       ).window.document.body
     );
 

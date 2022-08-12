@@ -1,5 +1,6 @@
 @use "sass:list"
 @use "theme"
+@use "hljs"
 
 @mixin truncate
     overflow: hidden
@@ -183,8 +184,10 @@ main
         margin-left: -2rem
 
         > a
-            font-size: 2.3rem
+            font-size: 1.4rem
             visibility: hidden
+            position: relative
+            right: 0.4rem
 
         &:hover > a
             visibility: visible
@@ -265,42 +268,6 @@ footer
     padding: 0.5rem 1rem
     text-align: center
     font-size: 0.9rem
-
-/* SYNTAX HIGHLIGHTING */
-
-pre > code
-
-    color: white
-
-    .hljs-comment
-        color: var(--code-comment)
-
-    .hljs-keyword
-        color: var(--code-keyword)
-
-    .hljs-string
-        color: var(--code-string)
-
-    .hljs-number
-        color: var(--code-number)
-
-    .hljs-literal
-        color: var(--code-literal)
-
-    .hljs-title
-        color: var(--code-title)
-
-    .hljs-built_in
-        color: var(--code-literal)
-
-    .hljs-params
-        color: var(--code-params)
-
-    .hljs-punctuation
-        color: var(--code-punctuation)
-
-    .hljs-attr
-        color: var(--code-attr)
 
 // MEDIA QUERIES
 

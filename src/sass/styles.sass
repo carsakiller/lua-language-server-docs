@@ -118,6 +118,7 @@ html,body
     margin: 0
     padding: 0
     width: 100%
+    min-height: 100vh
     background-color: var(--background-color)
     color: var(--text-color)
     scroll-behavior: smooth
@@ -132,13 +133,15 @@ body
     line-height: 1.5
     word-wrap: break-word
     width: 100%
-    min-height: calc(100vh - 2.5rem)
     display: flex
 
 #content
     max-width: 100%
     flex: 7 1
     min-width: 100px
+    display: flex
+    flex-direction: column
+    justify-content: space-between
 
 main
     padding: 0rem 2.5rem 3rem 2.5rem
@@ -234,11 +237,11 @@ aside
             color: var(--link-color-hover)
 
         &.h1
-            font-size: 1.1em
+            font-size: 1.2em
 
         &.h2
             margin: 0.25rem 0px 0.25rem 1rem
-            font-size: 0.9em
+            font-size: 1em
 
         &.h3
             margin: 0.22rem 0px 0.22rem 2rem
@@ -246,15 +249,15 @@ aside
 
         &.h4
             margin: 0.18rem 0px 0.18rem 3rem
-            font-size: 0.91em
+            font-size: 0.92em
 
         &.h5
             margin: 0.15rem 0px 0.15rem 4rem
-            font-size: 0.87em
+            font-size: 0.89em
 
         &.h6
             margin: 0.11rem 0px 0.11rem 5rem
-            font-size: 0.83em
+            font-size: 0.85em
 
 footer
     background-color: var(--footer-background-color)

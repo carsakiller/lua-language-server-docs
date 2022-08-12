@@ -231,21 +231,30 @@ for (const file of markdownFiles) {
     "#table-of-contents nav"
   );
   if (!sidenav)
-    throw new Error(
-      "Template does not contain a #table-of-contents"
-    );
+    throw new Error("Template does not contain a #table-of-contents");
   sidenav.innerHTML = "";
 
+  const previousHeadings: string[] = [];
   const headings = dom.window.document.querySelectorAll("h1,h2,h3,h4,h5,h6");
   for (const heading of headings) {
     const headingText = heading.textContent ?? "LOST";
-    const escapedHeading = encodeURIComponent(
+    let escapedHeading = encodeURIComponent(
       headingText.replace(/[^-\s\w\d\p{L}\p{M}*]+/gu, "").replace(/\s/g, "-")
-    )
-      .toLowerCase();
+    ).toLowerCase();
 
-    heading.id = escapedHeading;
+
+    const matches = previousHeadings.filter((heading) =>
+      heading.includes(escapedHeading)
+    );
+
+    if (matches.length > 0) {
+      escapedHeading += "-" + matches.length;
+    }
+
+    previousHeadings.push(escapedHeading);
+
     const tag = heading.tagName.toLowerCase();
+    heading.id = escapedHeading;
 
     heading.replaceWith(
       new JSDOM(
@@ -256,10 +265,8 @@ for (const file of markdownFiles) {
     sidenav.innerHTML += `<a href="#${escapedHeading}" class="${tag}" title="${headingText}">${heading.textContent}</a>`;
   }
 
-  const generate_stamp =
-    templateDOM.window.document.querySelector("footer");
-  if (!generate_stamp)
-    throw new Error("Template does not contain a <footer>!");
+  const generate_stamp = templateDOM.window.document.querySelector("footer");
+  if (!generate_stamp) throw new Error("Template does not contain a <footer>!");
   generate_stamp.innerHTML = `<div><i>Generated from commit <code>${commitHash}</code> of <a href="${WIKI_LINK}/${file.substring(
     0,
     file.length - 3
@@ -272,7 +279,7 @@ for (const file of markdownFiles) {
 
   const title = templateDOM.window.document.querySelector("head > title");
   if (!title) throw new Error("Template does not contain a <title> element!");
-  title.textContent = "Sumneko-Lua / " + filename;
+  title.textContent = "Sumneko-Lua — " + filename;
 
   try {
     fs.writeFileSync(HTML_DIR + filename + ".html", templateDOM.serialize());

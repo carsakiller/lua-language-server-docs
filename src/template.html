@@ -12,7 +12,7 @@
           currentPath.substring(lastSlashIndex + 1, currentPath.length - 5)
         );
 
-        const pages = document.querySelectorAll("#pages > nav > a");
+        const pages = document.querySelectorAll("#pages nav > a");
         pages.forEach((element) => {
           if (element.innerText === filename) {
             element.classList.add("active");

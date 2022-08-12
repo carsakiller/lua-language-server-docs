@@ -210,23 +210,6 @@ aside
             margin-top: 0px
             background-color: var(--sidebar-background-color)
 
-    #table-of-contents
-        right: 0px
-
-    #pages
-
-        nav a
-            margin-left: 1rem
-
-            &.active
-                margin-left: -0.5rem
-
-                &:before
-                    content: "📍"
-                    display: inline-block
-                    position: relative
-                    left: 0.15rem
-
     nav a
         @include truncate
         display: block
@@ -258,6 +241,23 @@ aside
         &.h6
             margin: 0.11rem 0px 0.11rem 5rem
             font-size: 0.85em
+
+    &#table-of-contents
+        right: 0px
+
+    &#pages
+
+        nav a
+            margin-left: 1rem
+
+            &.active
+                margin-left: -0.5rem
+
+                &:before
+                    content: "📍"
+                    display: inline-block
+                    position: relative
+                    left: 0.15rem
 
 footer
     background-color: var(--footer-background-color)

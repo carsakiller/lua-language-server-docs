@@ -9,6 +9,7 @@
     "dayjs": "^1.11.4",
     "highlight.js": "^11.6.0",
     "jsdom": "^20.0.0",
+    "jszip": "^3.10.1",
     "markdown-it": "^13.0.1"
   },
   "devDependencies": {

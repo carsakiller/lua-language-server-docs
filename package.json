@@ -1,7 +1,9 @@
 {
+  "type": "module",
   "scripts": {
     "dev": "tsc --watch",
-    "generate": "node ./src/index.js"
+    "generate": "node ./out/index.js",
+    "generate-zip": "node ./out/index.js --zip"
   },
   "dependencies": {
     "axios": "^0.27.2",
@@ -10,7 +12,8 @@
     "highlight.js": "^11.6.0",
     "jsdom": "^20.0.0",
     "jszip": "^3.10.1",
-    "markdown-it": "^13.0.1"
+    "markdown-it": "^13.0.1",
+    "sass": "^1.54.4"
   },
   "devDependencies": {
     "@types/jsdom": "^20.0.0",

@@ -2,3 +2,5 @@ node_modules
 wiki_pages
 src/*.js
 out
+html
+doc.zip

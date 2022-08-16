@@ -6,16 +6,25 @@ import MarkdownIt from "markdown-it";
 import jsdom from "jsdom";
 import chalk from "chalk";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
+import utc from "dayjs/plugin/utc.js";
+import JSZip from "jszip";
+import sass from "sass";
 
 dayjs.extend(utc);
+
+/********************************* ARGUMENTS *********************************/
+
+const args = process.argv.slice(2);
+const shouldZip = args.includes("--zip");
 
 /********************************* CONSTANTS *********************************/
 
 // paths
 const MARKDOWN_DIR = "./wiki_pages/";
 const TEMPLATE = "./src/template.html";
-const HTML_DIR = "./out/";
+const SASS_DIR = "./src/sass";
+const HTML_DIR = "./html/";
+const ZIP_DIR = "./doc.zip";
 const IMAGE_DIR = "images/";
 const WIKI_REPO_GIT_DIR = MARKDOWN_DIR + ".git";
 
@@ -31,6 +40,14 @@ const WIKI_REPO_URL = "https://github.com/sumneko/lua-language-server.wiki.git";
 // misc
 const TIMESTAMP = dayjs.utc().format("DD MMM YYYY @ h:mm:a UTC");
 
+/************************ PREPARE ZIP FILE (OPTIONAL) ************************/
+
+let zip: JSZip | undefined = undefined;
+
+if (shouldZip) {
+  zip = new JSZip();
+}
+
 /********************************** HELPERS **********************************/
 
 function fatalError(err: NodeJS.ErrnoException | Error | null | unknown) {
@@ -38,9 +55,9 @@ function fatalError(err: NodeJS.ErrnoException | Error | null | unknown) {
 
   if (err instanceof Error) {
     console.error(
-      `${chalk.bgRed(" FAIL ")} ${chalk.red(err.name)} ${chalk.red(
-        err.message
-      )}\n${chalk.red(err.stack)}`
+      `🍷 → 🥴 ${chalk.red(err.name)} ${chalk.red(err.message)}\n${chalk.red(
+        err.stack
+      )}`
     );
   } else {
     console.error(err);
@@ -48,42 +65,26 @@ function fatalError(err: NodeJS.ErrnoException | Error | null | unknown) {
   process.exit(1);
 }
 
-async function downloadImage(url: string, path: string) {
-  const writer = fs.createWriteStream(path);
+async function downloadImage(url: string, filename: string) {
+  const response = await axios.get(url, { responseType: "arraybuffer" });
 
-  return new Promise<boolean>((resolve, reject) => {
-    axios({
-      method: "GET",
-      url,
-      responseType: "stream",
-    })
-      .then((response) => {
-        const w = response.data.pipe(writer);
-        w.on("finish", () => {
-          console.log(
-            `${chalk.bgCyanBright(" IMG↓ ")} downloaded ${chalk.blueBright(
-              url
-            )} and saved to ${chalk.magenta(path)}`
-          );
-          resolve(true);
-        });
-        w.on("error", () => {
-          console.log(
-            `${chalk.bgRed(" FAIL ")} error while writing to ${chalk.magenta(
-              path
-            )}`
-          );
-          reject(false);
-        });
-      })
-      .catch((e) => fatalError(e));
-  });
+  const imageData = Buffer.from(response.data, "binary").toString("base64");
+
+  console.log(`📡 → 💻 ${chalk.blueBright(filename)}`);
+
+  if (zip) {
+    zip.file(IMAGE_DIR + filename, imageData, {compressionOptions: {level: 1}});
+    console.log(`🤐 → 📄 ${chalk.blueBright(filename)}`);
+  } else {
+    fs.writeFileSync(HTML_DIR + IMAGE_DIR + filename, imageData);
+    console.log(`💾 → 📄 ${chalk.blueBright(HTML_DIR + IMAGE_DIR + filename)}`);
+  }
 }
 
 /**
  * Converts links to other wiki pages to links pointing to local files. Also downloads images and points those to the local copies.
  */
-function localizeMarkdown(txt: string) {
+async function localizeMarkdown(txt: string) {
   // replace wiki links with links to local files
   txt = txt.replace(WIKI_LINK_REGEX, "./$1.html$2");
 
@@ -92,10 +93,10 @@ function localizeMarkdown(txt: string) {
   for (const match of txt.matchAll(IMAGE_REGEX)) {
     const URL = match[1];
     const splitURL = match[1].split("/");
-    const filename = splitURL[splitURL.length - 1].replace(/\?.*/g, "");
+    const filename = splitURL[splitURL.length - 1].replace(/\?\w+=.*/g, "");
 
-    if (!fs.existsSync(HTML_DIR + IMAGE_DIR + filename)) {
-      downloadImage(URL, HTML_DIR + IMAGE_DIR + filename);
+    if (!fs.existsSync(HTML_DIR + IMAGE_DIR + filename) || zip) {
+      await downloadImage(URL, filename);
     }
 
     replacements.push({
@@ -122,11 +123,7 @@ const md = new MarkdownIt({
       const hl = hljs.highlight(code, { language: lang });
       return hl.value;
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        console.warn(`${chalk.bgYellowBright(" WARN ")} ${e.message}`);
-      } else {
-        console.warn(`${chalk.bgYellowBright(" WARN ")} ${e}`);
-      }
+      fatalError(e);
       return code;
     }
   },
@@ -149,9 +146,7 @@ try {
 
   if (fs.existsSync(WIKI_REPO_GIT_DIR)) {
     // repo already exists locally
-    console.log(
-      `${chalk.bgMagenta(" PULL ")} pulling ${chalk.blueBright(WIKI_REPO_URL)}`
-    );
+    console.log(`⬇ → ☁ pulling ${chalk.blueBright(WIKI_REPO_URL)}`);
     execSync(
       `git --git-dir ${WIKI_REPO_GIT_DIR} --work-tree ${MARKDOWN_DIR} fetch`
     );
@@ -160,11 +155,7 @@ try {
     );
   } else {
     // repo needs to be cloned
-    console.log(
-      `${chalk.bgMagenta(" CLNE ")} cloning into ${chalk.blueBright(
-        WIKI_REPO_URL
-      )}`
-    );
+    console.log(`☁ → 📄 cloning into ${chalk.blueBright(WIKI_REPO_URL)}`);
     execSync(`git clone ${WIKI_REPO_URL} ${MARKDOWN_DIR}`);
   }
 
@@ -176,10 +167,26 @@ try {
   fatalError(e);
 }
 
-/************************** CONVERT MARKDOWN → HTML **************************/
-
-// Create dir for HTML and images
+/******************************** COMPILE SASS ********************************/
+// Create out dir
 fs.mkdirSync(HTML_DIR + IMAGE_DIR, { recursive: true });
+
+const files = fs
+  .readdirSync(SASS_DIR)
+  .filter((filename) => !filename.includes("_"));
+
+for (const file of files) {
+  const filename = file.substring(0, file.length - 5);
+  const result = sass.compile(`./src/sass/${file}`);
+
+  if (zip) {
+    zip.file(filename + ".css", result.css);
+  } else {
+    fs.writeFileSync(HTML_DIR + filename + ".css", result.css);
+  }
+}
+
+/************************** CONVERT MARKDOWN  →  HTML **************************/
 
 let markdownFiles: string[] = [];
 
@@ -217,10 +224,10 @@ for (const file of markdownFiles) {
     fatalError(e);
   }
 
-  console.log(`${chalk.white.bgCyan(" READ ")} ${chalk.magentaBright(file)}`);
+  console.log(`👓 → 📄 ${chalk.magentaBright(file)}`);
 
   // Localize images and links between pages
-  content = localizeMarkdown(content);
+  content = await localizeMarkdown(content);
   // Get HTML from Markdown
   const htmlString = md.render(content);
   // Convert into DOM Object
@@ -241,7 +248,6 @@ for (const file of markdownFiles) {
     let escapedHeading = encodeURIComponent(
       headingText.replace(/[^-\s\w\d\p{L}\p{M}*]+/gu, "").replace(/\s/g, "-")
     ).toLowerCase();
-
 
     const matches = previousHeadings.filter((heading) =>
       heading.includes(escapedHeading)
@@ -282,13 +288,20 @@ for (const file of markdownFiles) {
   title.textContent = "Sumneko-Lua — " + filename;
 
   try {
-    fs.writeFileSync(HTML_DIR + filename + ".html", templateDOM.serialize());
-    console.log(
-      `${chalk.bgGreenBright(" DONE ")} ${chalk.magentaBright(
-        filename + ".html"
-      )}`
-    );
+    if (zip) {
+      zip.file(filename + ".html", templateDOM.serialize());
+    } else {
+      fs.writeFileSync(HTML_DIR + filename + ".html", templateDOM.serialize());
+      console.log(`📜 → ✅ ${chalk.magentaBright(filename + ".html")}`);
+    }
   } catch (e) {
     fatalError(e);
+  }
+
+  if (zip) {
+    zip
+      .generateNodeStream({ type: "nodebuffer", streamFiles: true })
+      .pipe(fs.createWriteStream(ZIP_DIR))
+      .on("finish", () => console.log(`🤐 → 💽 ${chalk.magentaBright(ZIP_DIR)}`));
   }
 }

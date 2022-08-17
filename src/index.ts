@@ -169,7 +169,9 @@ try {
 
 /******************************** COMPILE SASS ********************************/
 // Create out dir
-fs.mkdirSync(HTML_DIR + IMAGE_DIR, { recursive: true });
+if (!zip) {
+  fs.mkdirSync(HTML_DIR + IMAGE_DIR, { recursive: true });
+}
 
 const files = fs
   .readdirSync(SASS_DIR)

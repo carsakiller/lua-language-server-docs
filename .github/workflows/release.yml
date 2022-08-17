@@ -2,8 +2,6 @@ name: Release Documentation
 
 on:
   push:
-    branches:
-      - "main"
     tags:
       - "*"
 
@@ -36,5 +34,4 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          with:
-            files: doc.zip
+          files: doc.zip

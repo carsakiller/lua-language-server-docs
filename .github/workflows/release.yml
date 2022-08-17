@@ -1,13 +1,14 @@
-name: Check Documentation Generation
+name: Release Documentation
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+    branches:
+      - "main"
+    tags:
+      - "*"
 
 jobs:
-  generate:
+  release:
     runs-on: ubuntu-latest
 
     strategy:
@@ -24,10 +25,17 @@ jobs:
       - run: npm ci
 
       - name: lint TS
-        run: npm run lint
+        run: npm urn lint
 
       - name: compile TS
         run: tsc
 
-      - name: Generate Documentation
+      - name: generate documentation zip
         run: npm run generate-zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          with:
+            files: doc.zip

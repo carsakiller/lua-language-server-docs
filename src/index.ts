@@ -73,7 +73,9 @@ async function downloadImage(url: string, filename: string) {
   console.log(`📡 → 💻 ${chalk.blueBright(filename)}`);
 
   if (zip) {
-    zip.file(IMAGE_DIR + filename, imageData, {compressionOptions: {level: 1}});
+    zip.file(IMAGE_DIR + filename, imageData, {
+      compressionOptions: { level: 1 },
+    });
     console.log(`🤐 → 📄 ${chalk.blueBright(filename)}`);
   } else {
     fs.writeFileSync(HTML_DIR + IMAGE_DIR + filename, imageData);
@@ -304,6 +306,8 @@ for (const file of markdownFiles) {
     zip
       .generateNodeStream({ type: "nodebuffer", streamFiles: true })
       .pipe(fs.createWriteStream(ZIP_DIR))
-      .on("finish", () => console.log(`🤐 → 💽 ${chalk.magentaBright(ZIP_DIR)}`));
+      .on("finish", () =>
+        console.log(`🤐 → 💽 ${chalk.magentaBright(ZIP_DIR)}`)
+      );
   }
 }

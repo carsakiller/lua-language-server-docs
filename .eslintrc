@@ -1,17 +1,21 @@
 {
   "root": true,
+  "env": {
+    "node": true
+  },
   "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint"
-  ],
+  "plugins": ["@typescript-eslint", "prettier"],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
   ],
-  "ignorePatterns": [
-    "node_modules",
-    "out",
-    "src/markdown"
-  ]
+  "ignorePatterns": ["node_modules", "out", "wiki_pages", "doc.zip"],
+  "rules": {
+    "no-undef": "off",
+    "prefer-const": "error",
+    "no-unused-vars": "error",
+    "prettier/prettier": "error"
+  }
 }

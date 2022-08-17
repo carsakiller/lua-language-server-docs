@@ -1,0 +1,41 @@
+name: Release Documentation
+
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+
+      - name: lint TS
+        run: npm urn lint
+
+      - name: compile TS
+        run: tsc
+
+      - name: generate documentation zip
+        run: npm run generate-zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          with:
+            files: doc.zip

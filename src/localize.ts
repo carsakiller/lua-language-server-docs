@@ -34,7 +34,7 @@ export async function localizeMarkdown(
     imagePromises.push(
       new Promise<void>((resolve) => {
         downloadImage(URL).then((image) => {
-          console.log(`📡 → 💻 ${chalk.blueBright(filename)}`);
+          console.log(`☁️  → 🎨 ${chalk.blueBright(filename)}`);
           outputter.outputImage(filename, image);
           resolve();
         });

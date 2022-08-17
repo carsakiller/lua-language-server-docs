@@ -95,7 +95,7 @@ try {
 
   if (fs.existsSync(WIKI_REPO_GIT_DIR)) {
     // repo already exists locally
-    console.log(`⬇ → ☁ pulling ${chalk.blueBright(WIKI_REPO_URL)}`);
+    console.log(`☁️  → 💽 pulling ${chalk.blueBright(WIKI_REPO_URL)}`);
     execSync(
       `git --git-dir ${WIKI_REPO_GIT_DIR} --work-tree ${MARKDOWN_DIR} fetch`
     );

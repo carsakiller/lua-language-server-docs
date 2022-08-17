@@ -1,6 +1,7 @@
 import axios from "axios";
 import chalk from "chalk";
 import { Outputter } from "./output";
+import fs from "fs";
 
 /* Downloads an image from the internet and returns the base64 data as a string */
 async function downloadImage(url: string): Promise<string> {
@@ -31,15 +32,20 @@ export async function localizeMarkdown(
     const splitURL = match[1].split("/");
     const filename = splitURL[splitURL.length - 1].replace(/\?\w+=.*/g, "");
 
-    imagePromises.push(
-      new Promise<void>((resolve) => {
-        downloadImage(URL).then((image) => {
-          console.log(`☁️  → 🎨 ${chalk.blueBright(filename)}`);
-          outputter.outputImage(filename, image);
-          resolve();
-        });
-      })
-    );
+    if (
+      outputter.getMethod() === "zip" ||
+      !fs.existsSync(`${outputter.outDir}${imageDir}${filename}`)
+    ) {
+      imagePromises.push(
+        new Promise<void>((resolve) => {
+          downloadImage(URL).then((image) => {
+            console.log(`☁️  → 🎨 ${chalk.blueBright(filename)}`);
+            outputter.outputImage(filename, image);
+            resolve();
+          });
+        })
+      );
+    }
 
     replacements.push({
       target: match[0],

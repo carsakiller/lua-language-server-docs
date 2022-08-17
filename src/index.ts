@@ -41,7 +41,7 @@ const TIMESTAMP = dayjs.utc().format("DD MMM YYYY @ h:mm:a UTC");
 
 /************************ PREPARE ZIP FILE (OPTIONAL) ************************/
 
-const outputter = new Outputter(HTML_DIR, shouldZip);
+const outputter = new Outputter(HTML_DIR, IMAGE_DIR, shouldZip);
 
 /********************************** HELPERS **********************************/
 

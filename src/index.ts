@@ -1,14 +1,14 @@
 import { execSync } from "child_process";
 import fs from "fs";
-import axios from "axios";
 import hljs from "highlight.js";
 import MarkdownIt from "markdown-it";
 import jsdom from "jsdom";
 import chalk from "chalk";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
-import JSZip from "jszip";
 import sass from "sass";
+import { localizeMarkdown } from "./localize.js";
+import { Outputter } from "./output.js";
 
 dayjs.extend(utc);
 
@@ -24,7 +24,6 @@ const MARKDOWN_DIR = "./wiki_pages/";
 const TEMPLATE = "./src/template.html";
 const SASS_DIR = "./src/sass";
 const HTML_DIR = "./html/";
-const ZIP_DIR = "./doc.zip";
 const IMAGE_DIR = "images/";
 const WIKI_REPO_GIT_DIR = MARKDOWN_DIR + ".git";
 
@@ -42,11 +41,7 @@ const TIMESTAMP = dayjs.utc().format("DD MMM YYYY @ h:mm:a UTC");
 
 /************************ PREPARE ZIP FILE (OPTIONAL) ************************/
 
-let zip: JSZip | undefined = undefined;
-
-if (shouldZip) {
-  zip = new JSZip();
-}
+const outputter = new Outputter(HTML_DIR, shouldZip);
 
 /********************************** HELPERS **********************************/
 
@@ -63,54 +58,6 @@ function fatalError(err: NodeJS.ErrnoException | Error | null | unknown) {
     console.error(err);
   }
   process.exit(1);
-}
-
-async function downloadImage(url: string, filename: string) {
-  const response = await axios.get(url, { responseType: "arraybuffer" });
-
-  const imageData = Buffer.from(response.data, "binary").toString("base64");
-
-  console.log(`📡 → 💻 ${chalk.blueBright(filename)}`);
-
-  if (zip) {
-    zip.file(IMAGE_DIR + filename, imageData, {
-      compressionOptions: { level: 1 },
-    });
-    console.log(`🤐 → 📄 ${chalk.blueBright(filename)}`);
-  } else {
-    fs.writeFileSync(HTML_DIR + IMAGE_DIR + filename, imageData);
-    console.log(`💾 → 📄 ${chalk.blueBright(HTML_DIR + IMAGE_DIR + filename)}`);
-  }
-}
-
-/**
- * Converts links to other wiki pages to links pointing to local files. Also downloads images and points those to the local copies.
- */
-async function localizeMarkdown(txt: string) {
-  // replace wiki links with links to local files
-  txt = txt.replace(WIKI_LINK_REGEX, "./$1.html$2");
-
-  // download images and point links to local files
-  const replacements = [];
-  for (const match of txt.matchAll(IMAGE_REGEX)) {
-    const URL = match[1];
-    const splitURL = match[1].split("/");
-    const filename = splitURL[splitURL.length - 1].replace(/\?\w+=.*/g, "");
-
-    if (!fs.existsSync(HTML_DIR + IMAGE_DIR + filename) || zip) {
-      await downloadImage(URL, filename);
-    }
-
-    replacements.push({
-      target: match[0],
-      replacement: `![](${IMAGE_DIR + filename})`,
-    });
-  }
-  for (const r of replacements) {
-    txt = txt.replace(r.target, r.replacement);
-  }
-
-  return txt;
 }
 
 /****************************** PREPARE PARSERS ******************************/
@@ -170,10 +117,6 @@ try {
 }
 
 /******************************** COMPILE SASS ********************************/
-// Create out dir
-if (!zip) {
-  fs.mkdirSync(HTML_DIR + IMAGE_DIR, { recursive: true });
-}
 
 const files = fs
   .readdirSync(SASS_DIR)
@@ -183,11 +126,7 @@ for (const file of files) {
   const filename = file.substring(0, file.length - 5);
   const result = sass.compile(`./src/sass/${file}`);
 
-  if (zip) {
-    zip.file(filename + ".css", result.css);
-  } else {
-    fs.writeFileSync(HTML_DIR + filename + ".css", result.css);
-  }
+  outputter.outputHTML(filename + ".css", result.css);
 }
 
 /************************** CONVERT MARKDOWN  →  HTML **************************/
@@ -231,7 +170,13 @@ for (const file of markdownFiles) {
   console.log(`👓 → 📄 ${chalk.magentaBright(file)}`);
 
   // Localize images and links between pages
-  content = await localizeMarkdown(content);
+  content = await localizeMarkdown(
+    content,
+    outputter,
+    WIKI_LINK_REGEX,
+    IMAGE_REGEX,
+    IMAGE_DIR
+  );
   // Get HTML from Markdown
   const htmlString = md.render(content);
   // Convert into DOM Object
@@ -291,23 +236,7 @@ for (const file of markdownFiles) {
   if (!title) throw new Error("Template does not contain a <title> element!");
   title.textContent = "Sumneko-Lua — " + filename;
 
-  try {
-    if (zip) {
-      zip.file(filename + ".html", templateDOM.serialize());
-    } else {
-      fs.writeFileSync(HTML_DIR + filename + ".html", templateDOM.serialize());
-      console.log(`📜 → ✅ ${chalk.magentaBright(filename + ".html")}`);
-    }
-  } catch (e) {
-    fatalError(e);
-  }
-
-  if (zip) {
-    zip
-      .generateNodeStream({ type: "nodebuffer", streamFiles: true })
-      .pipe(fs.createWriteStream(ZIP_DIR))
-      .on("finish", () =>
-        console.log(`🤐 → 💽 ${chalk.magentaBright(ZIP_DIR)}`)
-      );
-  }
+  outputter.outputHTML(filename + ".html", templateDOM.serialize());
 }
+
+outputter.finalize();

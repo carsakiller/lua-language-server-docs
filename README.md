@@ -7,6 +7,6 @@ You will need `nodejs` and `git`.
 1. Clone the repo
 2. `npm i` to install dependencies
 3. `tsc` to compile TS into JS
-4. `npm run generate` to generate HTML files
+4. `npm run generate` to generate HTML files or `npm run generate-zip` to get the files as a zip
 
-You should now have a `out/` directory with all of the HTML files as well as a sub-directory `images/` with all of the images from the wiki.
+You should now have a `html/` directory or `doc.zip` that contains all of the HTML and CSS, as well as a sub-directory `images/` with all of the images from the wiki.

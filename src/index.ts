@@ -227,6 +227,21 @@ for (const file of markdownFiles) {
     file.length - 3
   )}" target="_blank">GitHub Wiki</a> at ${TIMESTAMP}</i></div>`;
 
+  const selected = nav.querySelector(".active");
+  if (selected) {
+    selected.classList.remove("active");
+  }
+  const thisPageLink = nav.querySelector(`a[href='./${filename}.html']`);
+  if (thisPageLink) {
+    thisPageLink.classList.add("active");
+  } else {
+    fatalError(
+      new Error(
+        "Could not find link in navbar corresponding to page " + filename
+      )
+    );
+  }
+
   // Insert HTML into template
   const main = templateDOM.window.document.querySelector("body main");
   if (!main) throw new Error("Template does not contain a <main> element!");

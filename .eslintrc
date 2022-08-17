@@ -16,6 +16,11 @@
     "no-undef": "off",
     "prefer-const": "error",
     "no-unused-vars": "error",
-    "prettier/prettier": "error"
+    "prettier/prettier": [
+      "error",
+      {
+        "endOfLine": "auto"
+      }
+    ]
   }
 }

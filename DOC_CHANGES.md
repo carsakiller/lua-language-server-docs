@@ -1,3 +1,9 @@
+# 7ed60aa
+- fix: tables that include pipe character
+
+# 366934e
+- fix: cast syntax
+
 # d538e71
 - Fix additional misuse of "enum" in `@type` example
 

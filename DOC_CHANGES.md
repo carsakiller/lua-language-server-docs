@@ -1,3 +1,6 @@
+# f2711c5
+- fix: clarify how to include login
+
 # 7ed60aa
 - fix: tables that include pipe character
 
